@@ -11,12 +11,24 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class AppointmentDto {
     private Long id;
+    private String siteName;
     private Long siteId;
+    private String trailerNumber;
     private Long trailerId;
+    private String carrierName;
     private Long carrierId;
+    
+    // Gate information
+    private Long checkInGateId;
+    private String checkInGateName;
+    private Long checkOutGateId;
+    private String checkOutGateName;
+    
     private LocalDateTime scheduledTime;
-    private String appointmentType;  // For example: Scheduled, Unscheduled
-    private String status;           // For example: Pending, Confirmed, Completed
+    private LocalDateTime actualArrivalTime;
+    private LocalDateTime completionTime;
+    private String appointmentType;
+    private String status;
     private String guardComments;
     private String driverInfo;
 }

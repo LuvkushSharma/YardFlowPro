@@ -49,14 +49,20 @@ public class TrailerServiceImpl implements TrailerService {
 
     @Override
     public List<Trailer> getTrailersBySiteId(Long siteId) {
-        // This implementation assumes trailers are linked to a site via their current location
-        // You may need to adjust this based on your actual data model
+        // This implementation filters trailers by their location (door or yard location)
         return trailerRepository.findAll().stream()
                 .filter(trailer -> {
+                    // Check if the trailer is at a door in the requested site
                     if (trailer.getAssignedDoor() != null) {
                         return trailer.getAssignedDoor().getDock().getSite().getId().equals(siteId);
-                    } else if (trailer.getYardLocation() != null) {
+                    } 
+                    // Check if the trailer is at a yard location in the requested site
+                    else if (trailer.getYardLocation() != null) {
                         return trailer.getYardLocation().getSite().getId().equals(siteId);
+                    }
+                    // Check if the trailer has an appointment at the requested site
+                    else if (trailer.getCurrentAppointment() != null) {
+                        return trailer.getCurrentAppointment().getSite().getId().equals(siteId);
                     }
                     return false;
                 })

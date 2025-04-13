@@ -32,6 +32,16 @@ public class Appointment {
     @JsonIgnore
     private Site site;
     
+    @ManyToOne
+    @JoinColumn(name = "check_in_gate_id")
+    @JsonIgnore
+    private Gate checkInGate;
+    
+    @ManyToOne
+    @JoinColumn(name = "check_out_gate_id")
+    @JsonIgnore
+    private Gate checkOutGate;
+    
     @Enumerated(EnumType.STRING)
     private AppointmentType type;
     
@@ -40,6 +50,7 @@ public class Appointment {
     
     private LocalDateTime scheduledTime;
     private LocalDateTime actualArrivalTime;
+    private LocalDateTime completionTime;
     private String driverInfo;
     private String guardComments;
     

@@ -1,5 +1,6 @@
 package com.yardflowpro.service;
 
+import com.yardflowpro.dto.AppointmentDto;
 import com.yardflowpro.dto.CheckInRequestDto;
 import com.yardflowpro.dto.CheckOutRequestDto;
 import com.yardflowpro.model.Appointment;
@@ -12,5 +13,6 @@ public interface AppointmentService {
     List<Appointment> getActiveAppointments(Long siteId);
     Appointment getAppointmentById(Long id);
     List<Appointment> getAppointmentsByTrailerId(Long trailerId);
-    
+    List<Appointment> getAppointmentsByGateId(Long gateId);
+    AppointmentDto convertToDto(Appointment appointment);
 }
