@@ -139,6 +139,23 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     @Transactional
     public Appointment processCheckOut(CheckOutRequestDto checkOutRequest) {
+        // Validate required fields
+        if (checkOutRequest.getTrailerId() == null) {
+            throw new InvalidOperationException("Trailer ID is required for check-out");
+        }
+        
+        if (checkOutRequest.getGateId() == null) {
+            throw new InvalidOperationException("Gate ID is required for check-out");
+        }
+
+        if (checkOutRequest.getSiteId() == null) {
+            throw new InvalidOperationException("Site ID is required for check-out");
+        }
+
+        // Retrieve site
+        Site site = siteRepository.findById(checkOutRequest.getSiteId())
+        .orElseThrow(() -> new ResourceNotFoundException("Site not found with id: " + checkOutRequest.getSiteId()));
+        
         // Retrieve trailer
         Trailer trailer = trailerRepository.findById(checkOutRequest.getTrailerId())
                 .orElseThrow(() -> new ResourceNotFoundException("Trailer not found with id: " + checkOutRequest.getTrailerId()));
@@ -153,9 +170,22 @@ public class AppointmentServiceImpl implements AppointmentService {
             throw new ResourceNotFoundException("No active appointment found for trailer id: " + trailer.getId());
         }
         
+        // Verify site matches the appointment's site
+        if (!appointment.getSite().getId().equals(checkOutRequest.getSiteId())) {
+            throw new InvalidOperationException(
+                "Site mismatch: Trailer was checked in at site " + appointment.getSite().getName() + 
+                " (ID: " + appointment.getSite().getId() + "), but checkout was attempted at site " + 
+                site.getName() + " (ID: " + site.getId() + ")"
+            );
+        }
+        
         // Verify gate is at the same site as the appointment
         if (!gate.getSite().getId().equals(appointment.getSite().getId())) {
-            throw new InvalidOperationException("Gate does not belong to the same site as the appointment");
+            throw new InvalidOperationException(
+                "Gate belongs to site " + gate.getSite().getName() + 
+                " (ID: " + gate.getSite().getId() + "), but trailer is at site " + 
+                appointment.getSite().getName() + " (ID: " + appointment.getSite().getId() + ")"
+            );
         }
         
         // Verify gate has CHECK_OUT or CHECK_IN_OUT function
@@ -167,6 +197,13 @@ public class AppointmentServiceImpl implements AppointmentService {
         trailer.setCondition(checkOutRequest.getTrailerCondition());
         trailer.setLoadStatus(checkOutRequest.getLoadStatus());
         trailer.setCheckOutTime(LocalDateTime.now());
+        
+        // Set process status based on load status
+        if (checkOutRequest.getLoadStatus() == Trailer.LoadStatus.EMPTY) {
+            trailer.setProcessStatus(Trailer.ProcessStatus.UNLOADED);
+        } else if (checkOutRequest.getLoadStatus() == Trailer.LoadStatus.FULL) {
+            trailer.setProcessStatus(Trailer.ProcessStatus.LOADED);
+        }
         
         // Handle door relationship
         if (trailer.getAssignedDoor() != null) {
