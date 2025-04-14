@@ -9,7 +9,16 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.LocalDateTime;
+
+/**
+ * Represents a specific location in the yard where trailers can be parked.
+ * Yard locations are designated parking spaces for trailers when they're
+ * not at a dock door.
+ */
 @Entity
 @Table(name = "yard_locations")
 @Data
@@ -25,14 +34,15 @@ public class YardLocation {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String name;
 
     @Column(nullable = false, unique = true)
     private String code;
 
     @Enumerated(EnumType.STRING)
-    private LocationStatus status;
+    @Column(nullable = false)
+    private LocationStatus status = LocationStatus.AVAILABLE;
 
     @ManyToOne
     @JoinColumn(name = "site_id", nullable = false)
@@ -48,11 +58,26 @@ public class YardLocation {
     // Coordinates for yard map visualization
     private Double positionX;
     private Double positionY;
+    
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    // Enum for location status, using proper naming conventions
+    /**
+     * Status values representing the current state of a yard location.
+     */
     public enum LocationStatus {
+        /** Location is available for trailer parking */
         AVAILABLE,
+        
+        /** Location is currently occupied by a trailer */
         OCCUPIED,
+        
+        /** Location is not available for use (construction, etc.) */
         OUT_OF_SERVICE
     }
 }

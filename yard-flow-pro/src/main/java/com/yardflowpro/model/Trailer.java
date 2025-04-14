@@ -7,9 +7,17 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
+/**
+ * Represents a trailer that can be checked in, moved, loaded/unloaded, and checked out.
+ * Trailers are the primary assets managed in the yard management system.
+ */
 @Entity
 @Table(name = "trailers")
 @Data
@@ -25,16 +33,20 @@ public class Trailer {
     private String trailerNumber;
 
     @Enumerated(EnumType.STRING)
-    private LoadStatus loadStatus;
+    @Column(nullable = false)
+    private LoadStatus loadStatus = LoadStatus.EMPTY;
 
     @Enumerated(EnumType.STRING)
-    private ProcessStatus processStatus;
+    @Column(nullable = false)
+    private ProcessStatus processStatus = ProcessStatus.IN_GATE;
 
     @Enumerated(EnumType.STRING)
-    private TrailerCondition condition;
+    @Column(nullable = false)
+    private TrailerCondition condition = TrailerCondition.CLEAN;
 
     @Enumerated(EnumType.STRING)
-    private RefrigerationStatus refrigerationStatus;
+    @Column(nullable = false)
+    private RefrigerationStatus refrigerationStatus = RefrigerationStatus.NOT_APPLICABLE;
 
     @ManyToOne
     @JoinColumn(name = "carrier_id")
@@ -60,6 +72,18 @@ public class Trailer {
     @EqualsAndHashCode.Exclude
     @JsonIgnore
     private Appointment currentAppointment;
+    
+    @OneToMany(mappedBy = "trailer")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore
+    private List<Appointment> appointmentHistory = new ArrayList<>();
+    
+    @OneToMany(mappedBy = "trailer")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @JsonIgnore
+    private List<MoveRequest> moveRequests = new ArrayList<>();
 
     private LocalDateTime checkInTime;
     private LocalDateTime checkOutTime;
@@ -67,38 +91,86 @@ public class Trailer {
     // Detention tracking
     private LocalDateTime detentionStartTime;
     private boolean detentionActive;
+    
+    @CreationTimestamp
+    @Column(name = "created_at", updatable = false)
+    private LocalDateTime createdAt;
+    
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
-    // Enum for LoadStatus
+    /**
+     * Status values representing the load state of a trailer.
+     */
     public enum LoadStatus {
+        /** Trailer has no cargo */
         EMPTY,
+        
+        /** Trailer is partially loaded */
         PARTIAL,
+        
+        /** Trailer is fully loaded */
         FULL
     }
 
-    // Enum for ProcessStatus
+    /**
+     * Status values representing the current processing state of a trailer.
+     */
     public enum ProcessStatus {
+        /** Trailer has just checked in */
         IN_GATE,
+        
+        /** Trailer needs to be loaded */
         LOAD,
+        
+        /** Trailer is currently being loaded */
         LOADING,
+        
+        /** Trailer has completed loading */
         LOADED,
+        
+        /** Trailer needs to be unloaded */
         UNLOAD,
+        
+        /** Trailer is currently being unloaded */
         UNLOADING,
+        
+        /** Trailer has completed unloading */
         UNLOADED
     }
 
-    // Enum for TrailerCondition
+    /**
+     * Status values representing the physical condition of a trailer.
+     */
     public enum TrailerCondition {
+        /** Trailer is clean and in good condition */
         CLEAN,
+        
+        /** Trailer is dirty but usable */
         DIRTY,
+        
+        /** Trailer has damage that may need repair */
         DAMAGED
     }
 
-    // Enum for RefrigerationStatus
+    /**
+     * Status values representing the refrigeration state of a trailer.
+     */
     public enum RefrigerationStatus {
+        /** Refrigeration is running and maintaining temperature */
         ACTIVE,
+        
+        /** Refrigeration is preparing to reach target temperature */
         PRE_COOLING,
+        
+        /** Refrigeration is in defrost cycle */
         DEFROST,
+        
+        /** Refrigeration is turned off */
         OFF,
+        
+        /** Trailer does not have refrigeration capability */
         NOT_APPLICABLE
     }
 }
